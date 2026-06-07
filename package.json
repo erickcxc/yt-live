@@ -1,6 +1,6 @@
 {
   "name": "yt-live",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Thin CLI for arming a YouTube live broadcast: standard metadata, named stream key binding, thumbnail. Go-live verbs intentionally absent.",
   "type": "module",
   "bin": {

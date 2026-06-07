@@ -55,6 +55,19 @@ Requires Node 22+.
 Built live on stream in one hour (Episode 1). The three decisions above were made under the
 clock; the verified strip numbers come from this repo's own test run.
 
+## v0.1.1: trust readback, not intent (Episode 2)
+
+During Episode 2's live run, a broadcast that the CLI created went to air unlisted while
+four green checks said nothing. The root-cause investigation cleared the code (the insert
+provably sent `public`); visibility had drifted in the Studio UI between creation and air.
+The fix is defense in depth, because the system's real failure was silence:
+
+- `create` now prints the privacy **YouTube returned**, never what was requested, and
+  refuses to report ARMED when they differ.
+- `status` shows privacy on every row.
+- `verify` gained a fifth check: the bound broadcast is public. Any drift fails loud,
+  whatever caused it: an operator slip, an API quirk, or a future regression.
+
 ## Design rules
 
 - Pure logic (metadata templates, request bodies, idempotency selection) lives in `lib/metadata.js`

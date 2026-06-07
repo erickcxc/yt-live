@@ -4,7 +4,7 @@
 
 import { parseCliArgs } from '../lib/cli.js';
 import { buildTitle, buildDescription } from '../lib/metadata.js';
-import { buildBroadcastResource } from '../lib/broadcast.js';
+import { buildBroadcastResource, formatCreateResult } from '../lib/broadcast.js';
 import { auth, youtubeClient, ensureStream, upsertBroadcast, setThumbnail, findBoundUpcoming, verify, status } from '../lib/api.js';
 
 const args = parseCliArgs(process.argv.slice(2));
@@ -34,9 +34,14 @@ switch (args.command) {
     });
     const r = await upsertBroadcast(yt, { resource, streamId });
     if (args.file) await setThumbnail(yt, r.id, args.file);
-    console.log(`${r.updated ? 'Updated' : 'Created'}: "${title}"`);
-    console.log(`Watch URL: ${r.watchUrl}${args.file ? '\nThumbnail uploaded.' : ''}`);
-    console.log('ARMED. Press Start Streaming in OBS to go live.');
+    console.log(formatCreateResult({ title, watchUrl: r.watchUrl, privacy: r.privacy, updated: r.updated }));
+    if (args.file) console.log('Thumbnail uploaded.');
+    if (r.privacy === args.privacy) {
+      console.log('ARMED. Press Start Streaming in OBS to go live.');
+    } else {
+      console.log('NOT ARMED: privacy returned by YouTube does not match the request.');
+      process.exit(1);
+    }
     break;
   }
   case 'thumbnail': {

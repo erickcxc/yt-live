@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildBroadcastResource, buildCategoryUpdate, findUpcomingBoundBroadcast } from '../lib/broadcast.js';
+import * as broadcast from '../lib/broadcast.js';
+const { buildBroadcastResource, buildCategoryUpdate, findUpcomingBoundBroadcast } = broadcast;
 
 test('buildBroadcastResource composes an insert body with autoStart and autoStop enabled', () => {
   const r = buildBroadcastResource({
@@ -37,6 +38,55 @@ test('findUpcomingBoundBroadcast picks the upcoming broadcast bound to our strea
     { id: 'todays', status: { lifeCycleStatus: 'ready' }, contentDetails: { boundStreamId: 's1' } },
   ];
   assert.equal(findUpcomingBoundBroadcast(broadcasts, 's1').id, 'todays');
+});
+
+test('buildVerifyChecks fails the privacy check when the bound broadcast is not public (unlisted drift found live on Day 2)', () => {
+  const bound = {
+    contentDetails: { enableAutoStart: true },
+    status: { privacyStatus: 'unlisted' },
+  };
+  const checks = broadcast.buildVerifyChecks({ streamId: 's1', bound });
+  const privacyCheck = checks.find(([label]) => label.includes('public'));
+  assert.ok(privacyCheck, 'verify must include a broadcast-is-public check');
+  assert.equal(privacyCheck[1], false);
+  // and the same broadcast passes once public
+  bound.status.privacyStatus = 'public';
+  const again = broadcast.buildVerifyChecks({ streamId: 's1', bound });
+  assert.equal(again.find(([label]) => label.includes('public'))[1], true);
+});
+
+test('formatBroadcastLine shows lifecycle, privacy, title, and watch URL on one line', () => {
+  const line = broadcast.formatBroadcastLine({
+    id: 'abc123',
+    snippet: { title: 'Episode' },
+    status: { lifeCycleStatus: 'live', privacyStatus: 'unlisted' },
+  });
+  assert.ok(line.includes('live'), 'lifecycle visible');
+  assert.ok(line.includes('unlisted'), 'privacy visible (the Day 2 lesson)');
+  assert.ok(line.includes('Episode'));
+  assert.ok(line.includes('https://youtu.be/abc123'));
+});
+
+test('formatCreateResult reports the privacy YouTube actually returned, with a warning when it is not public', () => {
+  const ok = broadcast.formatCreateResult({
+    title: 'Episode',
+    watchUrl: 'https://youtu.be/abc123',
+    privacy: 'public',
+    updated: false,
+  });
+  assert.ok(ok.includes('Created'));
+  assert.ok(ok.includes('public'), 'readback privacy is printed, not assumed');
+  assert.ok(!ok.includes('WARNING'));
+
+  const drifted = broadcast.formatCreateResult({
+    title: 'Episode',
+    watchUrl: 'https://youtu.be/abc123',
+    privacy: 'unlisted',
+    updated: true,
+  });
+  assert.ok(drifted.includes('Updated'));
+  assert.ok(drifted.includes('WARNING'), 'non-public privacy must be loud');
+  assert.ok(drifted.includes('unlisted'));
 });
 
 test('findUpcomingBoundBroadcast returns null when nothing upcoming is bound to our stream', () => {
