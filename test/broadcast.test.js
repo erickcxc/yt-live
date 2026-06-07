@@ -21,11 +21,13 @@ test('buildBroadcastResource composes an insert body with autoStart and autoStop
   assert.equal(r.contentDetails.monitorStream.enableMonitorStream, false);
 });
 
-test('buildCategoryUpdate targets Science & Technology and re-sends the title (videos.update requirement)', () => {
-  const u = buildCategoryUpdate({ videoId: 'abc123', title: 'T' });
+test('buildCategoryUpdate targets Science & Technology and re-sends title AND description (videos.update replaces the whole snippet)', () => {
+  const u = buildCategoryUpdate({ videoId: 'abc123', title: 'T', description: 'D' });
   assert.equal(u.id, 'abc123');
   assert.equal(u.snippet.categoryId, '28');
   assert.equal(u.snippet.title, 'T');
+  // Found live on Day 2: omitting description here wiped it from the live broadcast.
+  assert.equal(u.snippet.description, 'D');
 });
 
 test('findUpcomingBoundBroadcast picks the upcoming broadcast bound to our stream', () => {
