@@ -15,6 +15,10 @@ test('buildBroadcastResource composes an insert body with autoStart and autoStop
   assert.equal(r.status.privacyStatus, 'public');
   assert.equal(r.contentDetails.enableAutoStart, true);
   assert.equal(r.contentDetails.enableAutoStop, true);
+  // liveBroadcasts.update rejects contentDetails without monitorStream
+  // ("The field enableMonitorStream is required") - found by the first smoke test.
+  // Disabled: with autoStart the encoder feed goes straight live; no control-room preview leg.
+  assert.equal(r.contentDetails.monitorStream.enableMonitorStream, false);
 });
 
 test('buildCategoryUpdate targets Science & Technology and re-sends the title (videos.update requirement)', () => {
