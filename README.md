@@ -48,6 +48,13 @@ Requires Node 22+.
 3. `yt-live stream-ensure`, then paste the named stream's key into
    OBS > Settings > Stream, by hand, once. (The CLI never displays it.)
 
+## Engineering notes
+
+![EP 1 decision sheet: no go-live verb, idempotent arm, secrets stay dark](assets/decision-sheet.png)
+
+Built live on stream in one hour (Episode 1). The three decisions above were made under the
+clock; the verified strip numbers come from this repo's own test run.
+
 ## Design rules
 
 - Pure logic (metadata templates, request bodies, idempotency selection) lives in `lib/metadata.js`
